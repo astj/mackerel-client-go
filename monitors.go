@@ -99,6 +99,7 @@ var (
 	_ Monitor = (*MonitorServiceMetric)(nil)
 	_ Monitor = (*MonitorExternalHTTP)(nil)
 	_ Monitor = (*MonitorExpression)(nil)
+	_ Monitor = (*MonitorEmpty)(nil)
 )
 
 // Ensure only monitor types defined in this package can be assigned to the
@@ -109,6 +110,7 @@ func (m *MonitorHostMetric) isMonitor()    {}
 func (m *MonitorServiceMetric) isMonitor() {}
 func (m *MonitorExternalHTTP) isMonitor()  {}
 func (m *MonitorExpression) isMonitor()    {}
+func (m *MonitorEmpty) isMonitor()         {}
 
 // MonitorConnectivity represents connectivity monitor.
 type MonitorConnectivity struct {
@@ -255,6 +257,22 @@ func (m *MonitorExpression) MonitorName() string { return m.Name }
 // MonitorID returns monitor id.
 func (m *MonitorExpression) MonitorID() string { return m.ID }
 
+// MonitorEmpty represents empty monitor.
+type MonitorEmpty struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+	Type string `json:"type,omitempty"`
+}
+
+// MonitorType returns monitor type.
+func (m *MonitorEmpty) MonitorType() string { return m.Type }
+
+// MonitorName returns monitor name.
+func (m *MonitorEmpty) MonitorName() string { return m.Name }
+
+// MonitorID returns monitor id.
+func (m *MonitorEmpty) MonitorID() string { return m.ID }
+
 // FindMonitors find monitors
 func (c *Client) FindMonitors() ([]Monitor, error) {
 	req, err := http.NewRequest("GET", c.urlFor("/api/v0/monitors").String(), nil)
@@ -345,6 +363,8 @@ func decodeMonitor(mes json.RawMessage) (Monitor, error) {
 		m = &MonitorExternalHTTP{}
 	case monitorTypeExpression:
 		m = &MonitorExpression{}
+	default:
+		m = &MonitorEmpty{}
 	}
 	if err := json.Unmarshal(mes, m); err != nil {
 		return nil, err
